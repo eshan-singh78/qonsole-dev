@@ -11,8 +11,8 @@ const version = JSON.parse(await fs.readFile(path.join(root, "package.json")))
   .devDependencies.electron;
 for (const target of process.argv.slice(2).length
   ? process.argv.slice(2)
-  : ["darwin-arm64", "win32-x64"]) {
-  if (!["darwin-arm64", "win32-x64"].includes(target))
+  : ["darwin-arm64", "win32-x64", "linux-x64"]) {
+  if (!["darwin-arm64", "win32-x64", "linux-x64"].includes(target))
     throw Error("Unknown target " + target);
   const [platform, arch] = target.split("-");
   const stage = await fs.mkdtemp(path.join(root, ".runtime/package-"));
@@ -79,6 +79,11 @@ for (const target of process.argv.slice(2).length
         stdio: "inherit",
       });
       execFileSync("ditto", ["-c", "-k", "--keepParent", bundle, dest]);
+    } else if (platform === "linux") {
+      const archive = path.join(output, "Qonsole-linux-x64.tar.gz");
+      execFileSync("tar", ["-czf", archive, "-C", output, path.basename(dir)]);
+      console.log(archive);
+      continue;
     } else {
       execFileSync("python3", [
         "-c",

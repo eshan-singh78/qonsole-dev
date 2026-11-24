@@ -1,0 +1,36 @@
+name: Cloud cross-platform match
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  mac:
+    if: github.ref == 'refs/heads/main'
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Play against the temporary Mumbai machines
+        env:
+          CONFIG_URL: ${{ secrets.QONSOLE_MAC_TEST_CONFIG }}
+        shell: bash
+        run: |
+          set -eu
+          umask 077
+          test -n "$CONFIG_URL"
+          work=$(mktemp -d "$RUNNER_TEMP/qonsole.XXXXXX")
+          trap 'rm -rf -- "$work"' EXIT
+          cd "$work"
+          curl -fsSL --retry 3 "$CONFIG_URL" -o config.json
+          for key in shared bundle; do
+            url=$(node -p "require('./config.json')['$key']")
+            curl -fsSL --retry 3 "$url" -o "$key.zip"
+            unzip -oq "$key.zip"
+          done
+          chmod +x bin/*
+          cp "$GITHUB_WORKSPACE/scripts/cloud-crossplay.mjs" scripts/cloud-crossplay.mjs
+          node scripts/cloud-crossplay.mjs

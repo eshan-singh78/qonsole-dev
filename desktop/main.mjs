@@ -14,7 +14,9 @@ const root = path.resolve(here, "..");
 const win = process.platform === "win32";
 const outer = app.isPackaged
   ? path.dirname(
-      win ? process.execPath : path.resolve(process.execPath, "../../.."),
+      process.platform === "darwin"
+        ? path.resolve(process.execPath, "../../..")
+        : process.execPath,
     )
   : path.join(root, ".runtime");
 const data = process.env.QONSOLE_PROFILE || path.join(outer, "Qonsole Data");
@@ -35,9 +37,10 @@ const bundled = app.isPackaged
   ? path.join(app.getAppPath(), "native")
   : path.join(root, ".runtime/native", arch);
 const bin = (folder, name) => path.join(folder, name + (win ? ".exe" : ""));
-const tekkenPath = win
-  ? bin(path.join(bundled, "tekken"), "openkumite")
-  : path.join(bundled, "tekken/OpenKumite.app/Contents/MacOS/openkumite");
+const tekkenPath =
+  process.platform === "darwin"
+    ? path.join(bundled, "tekken/OpenKumite.app/Contents/MacOS/openkumite")
+    : bin(path.join(bundled, "tekken"), "openkumite");
 const networkBin = bin(path.join(bundled, "network"), "dumbpipe");
 const existing = (...paths) => paths.find((p) => p && fs.existsSync(p)) || "";
 function config() {
