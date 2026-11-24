@@ -85,7 +85,7 @@ for (const target of process.argv.slice(2).length
       console.log(archive);
       continue;
     } else {
-      execFileSync("python3", [
+      execFileSync(process.platform === "win32" ? "python" : "python3", [
         "-c",
         "import shutil,sys; shutil.make_archive(sys.argv[1], 'zip', sys.argv[2], sys.argv[3])",
         dest.slice(0, -4),

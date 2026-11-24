@@ -1,0 +1,36 @@
+name: Packaged internet room
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  play:
+    if: github.ref == 'refs/heads/main'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-24.04, target: linux-x64 }
+          - { os: windows-2022, target: win32-x64 }
+          - { os: macos-15, target: darwin-arm64 }
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@v4
+        with: { node-version: '24' }
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: npm ci
+      - run: python scripts/native-engines.py ${{ matrix.target }}
+      - run: npm run build:desktop -- ${{ matrix.target }}
+      - name: Join the other platforms
+        shell: bash
+        env:
+          QONSOLE_ROOM_TEST_MAILBOX: ${{ secrets.QONSOLE_ROOM_TEST_MAILBOX }}
+        run: |
+          if [ "$RUNNER_OS" = Linux ]; then
+            xvfb-run -a node scripts/cloud-room-ui.mjs
+          else
+            node scripts/cloud-room-ui.mjs
+          fi

@@ -26,13 +26,13 @@ The room owner's launcher routes messages between players who share a match. The
 
 ### Packages and original game files
 
-The smaller `dist/Qonsole-darwin-arm64.zip` and `dist/Qonsole-win32-x64.zip` contain the launcher, networking helper and MIT-licensed OpenKumite engine. Other owners can select their converted Tekken assets in **Game files**, or use the native engine's disc importer on first launch. For Road Rash, supply an installation of the pinned native rework, select its executable and original game-data directory in **Game files**, and select a built `room-core.wasm` or compatible `rr-netd` to host. The personal folder resolves all these paths automatically.
+The smaller `dist/Qonsole-darwin-arm64.zip`, `dist/Qonsole-win32-x64.zip` and `dist/Qonsole-linux-x64.tar.gz` contain the launcher, networking helper and MIT-licensed OpenKumite engine. Other owners can select their converted Tekken assets in **Game files**, or use the native engine's disc importer on first launch. For Road Rash, supply an installation of the pinned native rework, select its executable and original game-data directory in **Game files**, and select a built `room-core.wasm` or compatible `rr-netd` to host. The personal folder resolves all these paths automatically.
 
 Keep the personal ZIP private. The smaller packages omit original game content and the Road Rash engine. The pinned Road Rash project documents that its owner has yet to select a project license. Both reworks are independent, in-development projects. [OpenKumite release](https://github.com/openkumite/openkumite/releases/tag/v0.5.1) · [Road Rash upstream build and licensing notes](https://github.com/arkits/road-rash/blob/0c1092a68d252ba2ae642f285ee68251eb708312/docs/plans/33b-windows.md)
 
 ### Build the desktop player
 
-The packaging workflow runs on macOS with Node 22+, npm, Python 3.12+, Xcode command line tools and `ditto`. It produces a locally signed Apple silicon app and an unsigned Windows x64 portable build.
+The packaging workflow runs on macOS with Node 22+, npm, Python 3.12+, Xcode command line tools and `ditto`. It produces a locally signed Apple silicon app and portable builds for Windows x64 and Linux x64.
 
 ```sh
 npm ci
