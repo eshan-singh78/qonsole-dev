@@ -28,7 +28,7 @@ async function send(key, value) {
   });
   assert.ok(res.ok, "Failed to publish test acknowledgement");
 }
-async function poll(key, phase, seconds = 360) {
+async function poll(key, phase, seconds = 900) {
   const deadline = Date.now() + seconds * 1000;
   while (Date.now() < deadline) {
     const res = await fetch(mailbox[key].get, {
@@ -53,6 +53,12 @@ try {
   const page = await app.firstWindow();
   await page.locator("#name").fill(platform);
   await page.locator("#transport").selectOption("internet");
+  // Hosted operating systems can start several minutes apart.
+  if (platform === "linux") {
+    await Promise.all(peers.map((p) => poll(p, "ready")));
+  } else {
+    await send(platform, { phase: "ready" });
+  }
   for (const phase of ["code", "invite"]) {
     if (platform === "linux") {
       await page.locator("#host").click();
@@ -84,6 +90,18 @@ try {
       const { invite } = await poll("host", phase);
       await page.locator("#invite").fill(invite);
       await page.locator("#join button").click();
+      await page
+        .locator("#lobby")
+        .waitFor({ state: "visible", timeout: 45000 })
+        .catch(async () => {
+          throw Error(
+            "Join via " +
+              phase +
+              " failed: " +
+              (await page.locator("#status").innerText()),
+          );
+        });
+      console.log(platform, "joined the host using", phase);
       await page.waitForFunction(
         () => document.querySelectorAll("#members li").length === 3,
         null,
