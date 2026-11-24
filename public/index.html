@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#101213" />
+    <title>Qonsole · Game library</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <header class="mast">
+      <a class="wordmark" href="/" aria-label="Qonsole library"
+        ><span class="mark" aria-hidden="true"></span>Qonsole</a
+      ><a href="#about" class="navlink">About the player</a>
+    </header>
+    <main>
+      <div class="pagehead">
+        <h1>Game library</h1>
+        <span class="count">2 games</span>
+      </div>
+      <div class="library">
+        <article>
+          <div class="cover tekken" aria-hidden="true">
+            <div class="ring"></div>
+            <div class="slash"></div>
+            <div class="cover-title">TEKKEN <b>3</b></div>
+          </div>
+          <div class="cardbody">
+            <p class="platform">PlayStation <span> / </span> Fighting</p>
+            <h2>Tekken 3</h2>
+            <p>
+              Play solo or challenge a friend in OpenKumite’s rework of the
+              PlayStation fighter.
+            </p>
+            <div class="actions">
+              <a class="play" href="/play/tekken">Open player <span>↗</span></a
+              ><a
+                class="source"
+                href="https://github.com/openkumite/openkumite"
+                target="_blank"
+                rel="noreferrer"
+                >GitHub source</a
+              >
+            </div>
+          </div>
+        </article>
+        <article>
+          <div class="cover road" aria-hidden="true">
+            <div class="sun"></div>
+            <div class="hills"></div>
+            <div class="highway"></div>
+            <div class="divider"></div>
+            <div class="cover-title">ROAD<br />RASH</div>
+          </div>
+          <div class="cardbody">
+            <p class="platform">Windows 95 <span> / </span> Racing</p>
+            <h2>Road Rash</h2>
+            <p>
+              Arkits’ native PC rework. Import a supported Windows disc image or
+              extracted ROADRASH folder.
+            </p>
+            <div class="actions">
+              <a class="play" href="/play/road">Open player <span>↗</span></a
+              ><a
+                class="source"
+                href="https://github.com/arkits/road-rash"
+                target="_blank"
+                rel="noreferrer"
+                >GitHub source</a
+              >
+            </div>
+          </div>
+        </article>
+      </div>
+      <details id="about">
+        <summary>How multiplayer works</summary>
+        <div>
+          <h3>Tekken 3</h3>
+          <p>
+            Both players run OpenKumite with matching game data. A Matchbox room
+            introduces the browsers over WebRTC. Each simulates the fight
+            locally and corrects earlier frames when inputs arrive late.
+          </p>
+          <h3>Road Rash</h3>
+          <p>
+            Both riders run the PC rework locally and join the same race server.
+            The host creates a room in Mano a Mano and shares the invite code.
+            Each rider has their own view.
+          </p>
+          <p>
+            These are unofficial community projects. Each project retains its
+            credits and notices.
+          </p>
+        </div>
+      </details>
+    </main>
+    <script src="/library.js" type="module"></script>
+  </body>
+</html>

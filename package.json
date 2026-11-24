@@ -1,0 +1,26 @@
+{
+  "name": "qonsole-player",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "setup": "python3 scripts/setup.py",
+    "bind:tekken": "node scripts/bind-tekken.mjs",
+    "start": "node server.mjs",
+    "test": "node --test test/*.test.mjs",
+    "desktop": "electron .",
+    "build:desktop": "node scripts/package-desktop.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "peerjs": "1.5.5",
+    "ws": "8.21.1"
+  },
+  "devDependencies": {
+    "@electron/packager": "20.3.0",
+    "electron": "45.3.3"
+  },
+  "main": "desktop/main.mjs"
+}
