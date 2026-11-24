@@ -1,11 +1,18 @@
 name: Cloud cross-platform match
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: Native game client
+        type: choice
+        options: [macos-15, windows-2022]
+        default: macos-15
 permissions:
   contents: read
 jobs:
-  mac:
+  native:
     if: github.ref == 'refs/heads/main'
-    runs-on: macos-15
+    runs-on: ${{ inputs.runner }}
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
@@ -16,13 +23,15 @@ jobs:
           node-version: '24'
       - name: Play against the temporary Mumbai machines
         env:
-          CONFIG_URL: ${{ secrets.QONSOLE_MAC_TEST_CONFIG }}
+          CONFIG_URL: ${{ inputs.runner == 'windows-2022' && secrets.QONSOLE_WINDOWS_TEST_CONFIG || secrets.QONSOLE_MAC_TEST_CONFIG }}
         shell: bash
         run: |
           set -eu
           umask 077
           test -n "$CONFIG_URL"
-          work=$(mktemp -d "$RUNNER_TEMP/qonsole.XXXXXX")
+          tmp="$RUNNER_TEMP"
+          if [ "$RUNNER_OS" = Windows ]; then tmp=$(cygpath -u "$tmp"); fi
+          work=$(mktemp -d "$tmp/qonsole.XXXXXX")
           trap 'rm -rf -- "$work"' EXIT
           cd "$work"
           curl -fsSL --retry 3 "$CONFIG_URL" -o config.json
@@ -32,5 +41,7 @@ jobs:
             unzip -oq "$key.zip"
           done
           chmod +x bin/*
-          cp "$GITHUB_WORKSPACE/scripts/cloud-crossplay.mjs" scripts/cloud-crossplay.mjs
+          repo="$GITHUB_WORKSPACE"
+          if [ "$RUNNER_OS" = Windows ]; then repo=$(cygpath -u "$repo"); fi
+          cp "$repo/scripts/cloud-crossplay.mjs" scripts/cloud-crossplay.mjs
           node scripts/cloud-crossplay.mjs

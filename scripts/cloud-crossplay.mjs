@@ -103,7 +103,20 @@ class AutomatedGames extends Games {
         opts.env.VK_DRIVER_FILES = path.resolve("bin/vk_swiftshader_icd.json");
         opts.env.VK_ICD_FILENAMES = opts.env.VK_DRIVER_FILES;
       }
-      args.push("--windowed", "--keys", keys.join(","), "--quit-after", "2600");
+      args.push(
+        "--windowed",
+        "--resolution",
+        "640x480",
+        "--render-scale",
+        "0.5",
+        "--mute",
+        "--hash-log",
+        "30",
+        "--keys",
+        keys.join(","),
+        "--quit-after",
+        "4000",
+      );
     }
     return super.child(file, args, opts, match);
   }

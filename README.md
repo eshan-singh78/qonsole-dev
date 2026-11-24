@@ -30,6 +30,8 @@ The smaller `dist/Qonsole-darwin-arm64.zip`, `dist/Qonsole-win32-x64.zip` and `d
 
 Keep the personal ZIP private. The smaller packages omit original game content and the Road Rash engine. The pinned Road Rash project documents that its owner has yet to select a project license. Both reworks are independent, in-development projects. [OpenKumite release](https://github.com/openkumite/openkumite/releases/tag/v0.5.1) · [Road Rash upstream build and licensing notes](https://github.com/arkits/road-rash/blob/0c1092a68d252ba2ae642f285ee68251eb708312/docs/plans/33b-windows.md)
 
+On Linux x64, extract the tarball and run `./Qonsole` from its folder. OpenKumite needs Vulkan or OpenGL and a working desktop display. For a minimal Ubuntu 24.04 test image, add `libx11-6`, `libx11-xcb1`, `libxcursor1`, `libxi6`, `libxkbcommon-x11-0`, `libasound2t64` and `mesa-vulkan-drivers`. A headless test can use `xvfb-run`.
+
 ### Build the desktop player
 
 The packaging workflow runs on macOS with Node 22+, npm, Python 3.12+, Xcode command line tools and `ditto`. It produces a locally signed Apple silicon app and portable builds for Windows x64 and Linux x64.
