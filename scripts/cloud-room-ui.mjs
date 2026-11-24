@@ -51,6 +51,9 @@ try {
     timeout: 45000,
   });
   const page = await app.firstWindow();
+  await page.waitForFunction(
+    () => typeof document.querySelector("#host")?.onclick === "function",
+  );
   await page.locator("#name").fill(platform);
   await page.locator("#transport").selectOption("internet");
   // Hosted operating systems can start several minutes apart.
@@ -60,8 +63,16 @@ try {
     await send(platform, { phase: "ready" });
   }
   for (const phase of ["code", "invite"]) {
+    assert.equal(await page.locator("#name").inputValue(), platform);
     if (platform === "linux") {
       await page.locator("#host").click();
+      assert.equal(
+        await page
+          .locator("#members li")
+          .first()
+          .evaluate((li) => li.firstChild.textContent),
+        "linux (you)",
+      );
       await page
         .locator(phase === "code" ? "#copy-code" : "#copy-invite")
         .click({ timeout: 60000 });
@@ -107,8 +118,14 @@ try {
         null,
         { timeout: 90000 },
       );
-      for (const name of ["linux", "win32", "darwin"])
-        assert.ok((await page.locator("#members").innerText()).includes(name));
+      const names = await page
+        .locator("#members li")
+        .evaluateAll((items) =>
+          items
+            .map((item) => item.firstChild.textContent.replace(/ \(you\)$/, ""))
+            .sort(),
+        );
+      assert.deepEqual(names, ["darwin", "linux", "win32"]);
       await send(platform, { phase });
       await page.locator("#home").waitFor({ state: "visible", timeout: 60000 });
       await send(platform, { phase: phase + "-closed" });
