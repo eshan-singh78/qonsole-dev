@@ -269,15 +269,64 @@ function cloudPeer(code, isHost, token) {
     debug: 0,
   });
   cloud = peer;
+  const hostId = "qonsole-party-v1-" + code;
+  const introduction = "qonsole-invite-v1";
+  let direct,
+    fallbackStarted = false,
+    fallbackInvite = "";
+  async function tryFallback() {
+    if (epoch !== token || state || fallbackStarted || !fallbackInvite) return;
+    fallbackStarted = true;
+    direct?.close();
+    status("Connecting through the host’s encrypted invite…");
+    upstream = {
+      send: (message) => api.wire("upstream", message).catch(problem),
+    };
+    try {
+      await api.join(fallbackInvite);
+      if (epoch === token)
+        upstream.send({ type: "hello", version: 1, name: name() });
+    } catch (error) {
+      if (epoch === token)
+        failJoin("Could not reach the room. " + error.message);
+    }
+  }
+  function introduce(connection, remaining = 14) {
+    if (
+      epoch !== token ||
+      !model ||
+      clients.size > 16 ||
+      !connection.peerConnection
+    )
+      return;
+    if (!invite) {
+      if (remaining)
+        setTimeout(() => introduce(connection, remaining - 1), 500);
+      return;
+    }
+    // PeerJS delivers offer metadata over its signaling socket, even when
+    // neither NAT permits the peers to open their WebRTC data channel.
+    const reply = peer.connect(connection.peer, {
+      label: introduction,
+      serialization: "json",
+      metadata: { invite },
+    });
+    if (!reply) return;
+    reply.on("error", () => reply.close());
+    setTimeout(() => reply.close(), 8000);
+  }
   peer.on("error", (e) => {
     if (epoch !== token) return;
+    if (isHost && e.type === "peer-unavailable") return;
+    if (fallbackStarted) return;
     if (isHost) {
       internetReady = false;
       paint();
       status(
         "Short-code service unavailable. Share the connection invite instead.",
       );
-    } else if (!state)
+    } else if (!state && fallbackInvite) tryFallback();
+    else if (!state && e.type === "peer-unavailable")
       failJoin(
         "Short-code connection failed. Ask the host for their connection invite.",
       );
@@ -298,33 +347,62 @@ function cloudPeer(code, isHost, token) {
       paint();
       return;
     }
-    const c = peer.connect("qonsole-party-v1-" + code, {
+    const c = peer.connect(hostId, {
+      metadata: { invitationVersion: 1 },
       reliable: true,
       serialization: "json",
     });
+    direct = c;
     upstream = peerLink(c);
-    c.on("open", () =>
-      upstream?.send({ type: "hello", version: 1, name: name() }),
-    );
+    c.on("open", () => {
+      if (!fallbackStarted && epoch === token)
+        upstream?.send({ type: "hello", version: 1, name: name() });
+    });
     c.on("data", (m) => {
-      if (epoch === token) incoming(m);
+      if (epoch === token && !fallbackStarted) incoming(m);
     });
     c.on("close", () => {
-      if (epoch === token) failJoin("The room connection closed.");
+      if (epoch !== token || fallbackStarted) return;
+      if (state) failJoin("The room connection closed.");
+      else tryFallback();
     });
     c.on("error", () => {
-      if (epoch === token)
-        failJoin("Connection failed. Try the host’s connection invite.");
+      if (epoch === token && !fallbackStarted) {
+        if (state) failJoin("The room connection closed.");
+        else tryFallback();
+      }
     });
   });
   peer.on("connection", (c) => {
-    if (!isHost || epoch !== token) {
+    if (
+      !isHost &&
+      epoch === token &&
+      c.peer === hostId &&
+      c.label === introduction
+    ) {
+      const offered = c.metadata?.invite;
+      if (
+        typeof offered === "string" &&
+        offered.length < 4100 &&
+        offered.startsWith("QR1." + code + ".") &&
+        /^QR1\.[A-HJ-NP-Z2-9]{10}\.(?:endpoint|node)[a-z2-7]{40,4000}$/.test(
+          offered,
+        )
+      ) {
+        fallbackInvite = offered;
+        setTimeout(tryFallback, 4000);
+      }
+      c.close();
+      return;
+    }
+    if (!isHost || epoch !== token || c.label === introduction) {
       c.close();
       return;
     }
     const id = crypto.randomUUID(),
       link = peerLink(c);
     accept(id, link);
+    if (link.receive && c.metadata?.invitationVersion === 1) introduce(c);
     c.on("data", (m) => link.receive?.(m));
     c.on("close", () => link.lost?.());
     c.on("error", () => c.close());
