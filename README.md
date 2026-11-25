@@ -19,10 +19,21 @@ A room accepts 16 people. Each Tekken match seats two and each Road Rash race se
 | Mode | How friends connect | What the host needs |
 | --- | --- | --- |
 | Local network | UDP discovers the code, then players connect to the host's local WebSocket. The direct invite works on reachable local addresses even if discovery is blocked. | The same reachable LAN and local firewall permission. Works offline. |
-| Internet code | PeerJS Cloud looks up the room. A WebRTC data channel carries the session directly when ICE finds a path, with PeerJS's default TURN configuration available. | An internet connection. No service account or project ID. [PeerJS FAQ](https://peerjs.com/client/faq) |
+| Internet code | PeerJS Cloud introduces the players. Qonsole tries a WebRTC data channel first. The host also returns its iroh invite through signaling so the guest can switch automatically if the data channel stalls. | An internet connection. No service account or project ID. [PeerJS FAQ](https://peerjs.com/client/faq) |
 | Internet connection invite | The long invite identifies an iroh endpoint. It can connect directly or forward encrypted traffic through an iroh public relay. | An internet connection. The public relays are free, rate-limited and have no uptime guarantee. [iroh public relay hosting](https://www.iroh.computer/services/hosting) |
 
-The room owner's launcher routes messages between players who share a match. The match host runs the game session. Tekken's rollback engine exchanges inputs over a local UDP adapter. The Road Rash host runs the upstream room and input-ordering code locally, using a WebAssembly build of the C++ server core on both platforms. Game files stay on each computer. The desktop build has no billing account, cloud deployment or service subscriptions. The host's ordinary internet connection carries the traffic. A service outage or firewall can prevent internet joins.
+The room owner's launcher routes messages between players who share a match. The match host runs the game session. Tekken's rollback engine exchanges inputs over a local UDP adapter. The Road Rash host runs the upstream room and input-ordering code locally, using a WebAssembly build of the C++ server core. Game files stay on each computer. The desktop build has no billing account, cloud deployment or service subscriptions. The host's ordinary internet connection carries the traffic. A service outage or firewall can prevent internet joins.
+
+### Remote cross-play verification
+
+| Game | Machines | What passed on November 25, 2026 (India time) |
+| --- | --- | --- |
+| Road Rash | Mumbai EC2 Linux and Windows Server, GitHub-hosted Apple silicon macOS | Three automated native riders ran 600 simulation ticks. All three reported the same state hash, `11409676181235700393`, and received official results from the race server. |
+| Tekken 3 | Mumbai EC2 Linux, GitHub-hosted Windows desktop and Apple silicon macOS | Linux–macOS, Linux–Windows and macOS–Windows each started a two-player match and synchronized with the same seed on both machines. The test ends at synchronization. Completing a full fight and measuring controller latency are outside its coverage. |
+
+The headless Windows Server completed the Road Rash test. Its Tekken session timed out, so both Windows Tekken pairs ran again on a hosted Windows desktop. The native test uses the same room, networking and game adapters as the launcher. [macOS test run](https://github.com/eshan-singh78/qonsole-dev/actions/runs/45480947827) · [Windows desktop test run](https://github.com/eshan-singh78/qonsole-dev/actions/runs/45484205680)
+
+In a separate test of the packaged apps, Linux hosted a room and Windows and macOS joined with the ten-character code. Both guests saw all three player names and returned to the home screen when the host left. All three repeated the sequence with the full connection invite. [Packaged room test on all three platforms](https://github.com/eshan-singh78/qonsole-dev/actions/runs/45485100905)
 
 ### Packages and original game files
 
