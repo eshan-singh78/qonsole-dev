@@ -1,3 +1,4 @@
+import { createShelf } from "./shelf.mjs";
 import { Room, newCode, playerName, seats, validCode } from "./room.mjs";
 const api = window.qonsole,
   $ = (id) => document.getElementById(id);
@@ -27,10 +28,45 @@ const problem = (e) =>
       "",
     ),
   );
-const show = (id) => {
-  for (const section of ["home", "lobby", "solo"])
-    $(section).hidden = section !== id;
-};
+let baseScreen = "home",
+  tab = "library";
+const shelf = createShelf({
+  api,
+  play: playSolo,
+  browse,
+  report: problem,
+  message: status,
+  inSession: () => baseScreen !== "home",
+});
+function browse(next) {
+  tab = next;
+  const screen = tab === "session" ? baseScreen : "home";
+  for (const id of ["home", "lobby", "solo"]) $(id).hidden = id !== screen;
+  $("rooms-panel").hidden = tab !== "library" || baseScreen !== "home";
+  $("nav-session").hidden = baseScreen === "home";
+  $("nav-session").textContent = baseScreen === "solo" ? "Game" : "Room";
+  for (const id of ["library", "store", "session"]) {
+    const button = $("nav-" + id);
+    if (id === tab) button.setAttribute("aria-current", "page");
+    else button.removeAttribute("aria-current");
+  }
+  shelf.show(tab);
+}
+function show(id) {
+  if (id === baseScreen) return;
+  baseScreen = id;
+  browse(id === "home" ? "library" : "session");
+}
+for (const id of ["library", "store", "session"])
+  $("nav-" + id).onclick = () => {
+    status("");
+    browse(id);
+  };
+browse("library");
+api
+  .store()
+  .then((items) => shelf.data(items))
+  .catch(problem);
 const pretty = (code) => code.slice(0, 5) + "-" + code.slice(5);
 function el(tag, text) {
   const e = document.createElement(tag);
@@ -124,8 +160,10 @@ function paint() {
 async function requestGame(type, game, id) {
   const files = await api.files();
   if (!files[game]) {
-    await openFiles();
-    throw Error("Choose the " + titles[game] + " executable first.");
+    browse("store");
+    throw Error(
+      "Install " + titles[game] + " in Store, then return to the room.",
+    );
   }
   if (game === "road" && type === "start" && !files.daemon) {
     await openFiles();
@@ -491,6 +529,10 @@ $("join").onsubmit = async (e) => {
   }
 };
 api.events(({ type, value: e }) => {
+  if (type === "store") {
+    shelf.data(e);
+    return;
+  }
   if (type === "relayInvite") {
     invite = e;
     paint();
@@ -545,25 +587,27 @@ $("copy-invite").onclick = () =>
     .then(() => status("Connection invite copied. Paste it in Join room."));
 for (const game of Object.keys(titles)) {
   $("start-" + game).onclick = () => requestGame("start", game).catch(problem);
-  $("solo-" + game).onclick = async () => {
-    try {
-      const cfg = await api.files();
-      if (!cfg[game]) {
-        await openFiles();
-        throw Error("Select the " + titles[game] + " executable.");
-      }
-      playing = { id: crypto.randomUUID(), game, solo: true };
-      await api.play(playing, true, name());
-      if (playing) {
-        $("solo-title").textContent = titles[game];
-        show("solo");
-        status("");
-      }
-    } catch (e) {
-      playing = null;
-      problem(e);
+}
+async function playSolo(game) {
+  if (baseScreen !== "home" || playing || state)
+    throw Error("Leave the current session before starting solo play.");
+  try {
+    const cfg = await api.files();
+    if (!cfg[game]) {
+      await openFiles();
+      throw Error("Select the " + titles[game] + " executable.");
     }
-  };
+    playing = { id: crypto.randomUUID(), game, solo: true };
+    await api.play(playing, true, name());
+    if (playing) {
+      $("solo-title").textContent = titles[game];
+      show("solo");
+      status("");
+    }
+  } catch (e) {
+    playing = null;
+    problem(e);
+  }
 }
 $("stop-solo").onclick = async () => {
   playing = null;
@@ -573,6 +617,7 @@ $("stop-solo").onclick = async () => {
 async function openFiles() {
   const cfg = await api.files();
   const rows = {
+    tekken: "Tekken executable",
     tekkenAssets: "Tekken converted assets",
     road: "Road Rash executable",
     daemon: "Road Rash room server (.wasm or rr-netd)",
@@ -590,12 +635,23 @@ async function openFiles() {
         info,
         action("Choose", async () => {
           await api.choose(key);
+          shelf.data(await api.store());
           await openFiles();
         }),
       );
       return row;
     }),
   );
+  if (baseScreen === "home") {
+    for (const game of Object.keys(titles))
+      if (cfg[game])
+        $("paths").append(
+          action("Open " + titles[game], async () => {
+            $("settings").close();
+            await playSolo(game);
+          }),
+        );
+  }
   if (!$("settings").open) $("settings").showModal();
 }
 $("files").onclick = () => openFiles().catch(problem);

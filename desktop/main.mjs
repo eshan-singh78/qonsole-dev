@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog, clipboard } from "electron";
+import { app, BrowserWindow, ipcMain, dialog, clipboard, net } from "electron";
 import { fileURLToPath } from "node:url";
 import fs from "node:fs";
 import path from "node:path";
@@ -6,6 +6,7 @@ import { spawn } from "node:child_process";
 import { once } from "node:events";
 import { setTimeout as delay } from "node:timers/promises";
 import { WebSocket } from "ws";
+import { Store, gamePaths } from "./store.mjs";
 import { hostLan, findLan } from "./lan.mjs";
 import { validCode, playerName } from "./room.mjs";
 import { Games, freePort } from "./games.mjs";
@@ -27,6 +28,7 @@ try {
   /* A read-only volume uses the normal per-user desktop profile. */
 }
 const profile = app.getPath("userData");
+if (!app.requestSingleInstanceLock()) app.exit(0);
 const settingsFile = path.join(profile, "game-files.json");
 let prefs = {};
 try {
@@ -42,20 +44,44 @@ const tekkenPath =
     ? path.join(bundled, "tekken/OpenKumite.app/Contents/MacOS/openkumite")
     : bin(path.join(bundled, "tekken"), "openkumite");
 const networkBin = bin(path.join(bundled, "network"), "dumbpipe");
+const userAssets =
+  process.platform === "linux"
+    ? process.env.XDG_DATA_HOME ||
+      path.join(app.getPath("home"), ".local/share")
+    : app.getPath("appData");
 const existing = (...paths) => paths.find((p) => p && fs.existsSync(p)) || "";
+const store = new Store(profile, arch, {
+  fetcher: (...args) => net.fetch(...args),
+  onChange: () => emit("store", store.list(config())),
+});
 function config() {
   const personal = path.join(outer, "Games");
+  const tekken = store.paths("tekken"),
+    road = store.paths("road");
   return {
-    tekken: existing(tekkenPath),
+    tekken: existing(
+      prefs.tekken,
+      tekken.tekken,
+      tekkenPath,
+      gamePaths("tekken", arch, path.join(personal, "Tekken3", arch)).tekken,
+    ),
     savePath: path.join(profile, "Saves"),
     tekkenAssets: existing(
       prefs.tekkenAssets,
+      tekken.tekkenAssets,
       path.join(personal, "Tekken3/assets"),
+      process.env.OPENKUMITE_ASSETS,
+      path.join(
+        userAssets,
+        process.platform === "linux" ? "openkumite" : "OpenKumite",
+        "assets",
+      ),
       !app.isPackaged &&
         path.join(root, ".runtime/tekken/openkumite-v0.5.1-web/assets"),
     ),
     road: existing(
       prefs.road,
+      road.road,
       bin(path.join(personal, "RoadRash"), "rr-game"),
       !app.isPackaged &&
         bin(path.join(root, ".runtime/native-road-static"), "rr-game"),
@@ -64,6 +90,7 @@ function config() {
     ),
     daemon: existing(
       prefs.daemon,
+      road.daemon,
       path.join(personal, "RoadRash/room-core.wasm"),
       !app.isPackaged && path.join(root, ".runtime/road-room.wasm"),
       bin(path.join(personal, "RoadRash"), "rr-netd"),
@@ -72,7 +99,12 @@ function config() {
     ),
     roadAssets: existing(
       prefs.roadAssets,
+      road.roadAssets,
       path.join(personal, "RoadRash/ROADRASH"),
+      path.join(
+        (win && process.env.LOCALAPPDATA) || userAssets,
+        "RoadRashNative/RoadRash/game/ROADRASH",
+      ),
       !app.isPackaged && path.join(root, ".runtime/road-disc/files/ROADRASH"),
     ),
   };
@@ -172,8 +204,16 @@ function handle(name, fn) {
   });
 }
 handle("files", config);
+handle("store", () => store.list(config()));
+handle("install", (id) => store.install(id));
+handle("cancelInstall", (id) => store.cancel(id));
+handle("removeInstall", (id) => {
+  if (games.match?.game === id)
+    throw Error("Close this game before removing it.");
+  return store.remove(id);
+});
 handle("choose", async (key) => {
-  if (!["tekkenAssets", "road", "daemon", "roadAssets"].includes(key))
+  if (!["tekken", "tekkenAssets", "road", "daemon", "roadAssets"].includes(key))
     throw Error("Unknown file selection.");
   const folder = key.endsWith("Assets");
   const choice = await dialog.showOpenDialog(window, {
@@ -295,7 +335,12 @@ handle("members", (ids) => {
 });
 handle("packet", (match, from, bytes) => games.input(match, from, bytes));
 handle("stop", () => games.stop());
-app.whenReady().then(() => {
+app.on("second-instance", () => {
+  window?.restore();
+  window?.focus();
+});
+app.whenReady().then(async () => {
+  await store.cleanStaging();
   window = new BrowserWindow({
     title: "Qonsole",
     width: 1030,
@@ -322,6 +367,7 @@ app.whenReady().then(() => {
 });
 app.on("window-all-closed", () => app.quit());
 app.on("before-quit", () => {
+  for (const id of store.active.keys()) store.cancel(id);
   stopLinks();
   games.stop();
 });

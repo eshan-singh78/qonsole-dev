@@ -83,6 +83,8 @@ def main():
         subprocess.run(["ditto", str(DIST / "Qonsole-darwin-arm64/Qonsole.app"), str(stage / "Qonsole.app")], check=True)
         games = stage / "Games"
         shutil.copytree(args.tekken_assets, games / "Tekken3/assets")
+        for target in ("darwin-arm64", "win32-x64"):
+            shutil.copytree(RUNTIME / "native" / target / "tekken", games / "Tekken3" / target / "engine", ignore=shutil.ignore_patterns("serve", "serve.exe"))
         road = games / "RoadRash"
         copy_disc(args.road_assets, road / "ROADRASH")
         windows_engine(road, args.windows_road)

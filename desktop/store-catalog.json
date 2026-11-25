@@ -1,0 +1,53 @@
+{
+  "release": "store-v1",
+  "games": {
+    "road": {
+      "platforms": {
+        "darwin-arm64": {
+          "file": "road-darwin-arm64.tar.gz",
+          "size": 6064642,
+          "sha256": "0d0ce9b82883a033dd10e1024e582ad0a859468c43b5defaf8fd28484f404b0a"
+        },
+        "win32-x64": {
+          "file": "road-win32-x64.tar.gz",
+          "size": 5471551,
+          "sha256": "3dc232858c532904c67e64c1c9dd7261616bc378d9b0bce105c6861294cd5092"
+        },
+        "linux-x64": {
+          "file": "road-linux-x64.tar.gz",
+          "size": 8370784,
+          "sha256": "378e10e7e5638761bb3c0cd3778c867898067184c24bd06ef1418299ce1d762d"
+        }
+      },
+      "data": {
+        "file": "road-data.tar.gz",
+        "size": 421471998,
+        "sha256": "a65b20824d08701864d251365996c9df50dbe17d748901f141bc418bae7f50c3"
+      }
+    },
+    "tekken": {
+      "platforms": {
+        "darwin-arm64": {
+          "file": "tekken-darwin-arm64.tar.gz",
+          "size": 28697539,
+          "sha256": "e00e1f76bf551532196b9a1a2db7580462514da26f78440b32684ea6494db0cc"
+        },
+        "win32-x64": {
+          "file": "tekken-win32-x64.tar.gz",
+          "size": 16537592,
+          "sha256": "85fb08ca46296a8782a109e46641a9c87876cc03d2db8919f8b3945aecd26441"
+        },
+        "linux-x64": {
+          "file": "tekken-linux-x64.tar.gz",
+          "size": 16898222,
+          "sha256": "3532e8e51757782264124639bfec356d0398a9b0b77863630d8c0dabc9fc6c74"
+        }
+      },
+      "data": {
+        "file": "tekken-data.tar.gz",
+        "size": 1271400820,
+        "sha256": "f57c40f32317437e78986a53ec191fd2c27ffcbfbbdfaf7fd93ad1fc19111450"
+      }
+    }
+  }
+}

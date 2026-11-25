@@ -12,25 +12,29 @@
   </head>
   <body>
     <header>
-      <span class="word"><i></i>Qonsole</span
-      ><button class="quiet" id="files">Game files</button>
+      <span class="word"><i></i>Qonsole</span>
+      <nav aria-label="Main navigation">
+        <button id="nav-library" aria-current="page">Library</button>
+        <button id="nav-store">Store</button>
+        <button id="nav-session" hidden>Room</button>
+      </nav>
+      <button class="quiet" id="files">Game files</button>
     </header>
     <main>
       <section id="home">
-        <h1>Game library</h1>
-        <div class="cards">
-          <article class="card fighter">
-            <span>PlayStation · Fighting</span>
-            <h2>TEKKEN <b>3</b></h2>
-            <button id="solo-tekken">Play solo</button>
-          </article>
-          <article class="card rider">
-            <span>Windows 95 · Racing</span>
-            <h2>ROAD RASH</h2>
-            <button id="solo-road">Play solo</button>
-          </article>
+        <div class="shelf-top">
+          <div>
+            <h1 id="shelf-title">Library</h1>
+            <p id="shelf-description" class="hint"></p>
+          </div>
+          <button id="collection" hidden>Install both games</button>
         </div>
-        <section class="panel">
+        <div class="cards" id="catalog-games"></div>
+        <div id="empty-library" class="empty-library" hidden>
+          <p>Your library is empty.</p>
+          <button id="browse-store" class="primary">Browse store</button>
+        </div>
+        <section class="panel" id="rooms-panel">
           <h2>Play together</h2>
           <div class="fields">
             <label
@@ -96,6 +100,17 @@
         <button id="stop-solo">Close game</button>
       </section>
       <p id="status" role="status" aria-live="polite"></p>
+      <dialog id="confirm-remove">
+        <h2 id="remove-title"></h2>
+        <p>
+          Remove the downloaded game from this device? Your saved games will be
+          kept.
+        </p>
+        <form method="dialog" class="actions">
+          <button value="cancel" autofocus>Keep game</button
+          ><button value="remove">Remove download</button>
+        </form>
+      </dialog>
       <dialog id="settings">
         <h2>Game files</h2>
         <p>

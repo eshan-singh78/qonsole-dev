@@ -44,7 +44,9 @@ PIPES = {
     "darwin-arm64": ("dumbpipe-v0.40.2-darwin-aarch64.tar.gz", "b62f4f9d8982792309aeaa05fc891cc64a983c2b9674cfdd794737dc9e6649b3"),
     "win32-x64": ("dumbpipe-v0.40.2-windows-x86_64.zip", "3874c0c1ebe9308f891bc57eb1a4e822697fc82ecd7de494ad74bc327c3ce87a"),
 }
-for target in sys.argv[1:] or BUILDS:
+network_only = "--network-only" in sys.argv[1:]
+for target in [arg for arg in sys.argv[1:] if arg != "--network-only"] or BUILDS:
     dest = ROOT / ".runtime/native" / target
-    install(RELEASE, dest / "tekken", BUILDS[target])
+    if not network_only:
+        install(RELEASE, dest / "tekken", BUILDS[target])
     install("https://github.com/n0-computer/dumbpipe/releases/download/v0.40.2/", dest / "network", PIPES[target])

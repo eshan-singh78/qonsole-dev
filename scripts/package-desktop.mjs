@@ -44,9 +44,6 @@ for (const target of process.argv.slice(2).length
     }
     await notices("peerjs");
     await notices("ws");
-    await copy(".runtime/native/" + target + "/tekken", "native/tekken", {
-      filter: (p) => !/^serve(\.exe)?$/.test(path.basename(p)),
-    });
     await copy(".runtime/native/" + target + "/network", "native/network");
     await copy("desktop/notices", "notices/iroh-dumbpipe");
     await fs.writeFile(
@@ -54,7 +51,7 @@ for (const target of process.argv.slice(2).length
       JSON.stringify({
         name: "qonsole",
         productName: "Qonsole",
-        version: "0.2.0",
+        version: "0.3.0",
         type: "module",
         main: "desktop/main.mjs",
       }),

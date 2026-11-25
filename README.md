@@ -2,6 +2,16 @@
 
 Qonsole is a portable, player-hosted desktop launcher for Tekken 3 and Road Rash for Windows 95. Qonsole owns the room code, guest list and match selection. OpenKumite runs the Tekken fight and the Road Rash rework runs the race. Each computer reads its own game files. Players can stay in the same room between matches. The repository also includes a browser player.
 
+## Install games from Store
+
+Download the portable launcher for [Windows x64](https://github.com/eshan-singh78/qonsole-builds/releases/download/player-v0.3.0/Qonsole-win32-x64.zip), [Apple silicon macOS](https://github.com/eshan-singh78/qonsole-builds/releases/download/player-v0.3.0/Qonsole-darwin-arm64.zip) or [Linux x64](https://github.com/eshan-singh78/qonsole-builds/releases/download/player-v0.3.0/Qonsole-linux-x64.tar.gz). Extract it and open Qonsole.
+
+1. Open **Store** and choose **Install** for Tekken 3 or Road Rash. **Install both games** downloads the pair. The size shown includes the compatible engine and game data.
+2. Open **Library** to play solo or use **Play together** to host or join a multiplayer room. Each player installs the game on their own device. Once installed, solo play works offline.
+3. **Remove** in Library deletes a Store installation and keeps game saves. Imported installations also appear in Library. You can manage their paths under **Game files**.
+
+The launcher fetches files from a [separate builds repository](https://github.com/eshan-singh78/qonsole-builds/releases/tag/store-v1) only when a player requests an install. It checks each archive’s size and SHA-256 against the catalog shipped in the app before extraction. Downloads are staged on the same volume as the Library. In a writable portable installation the Library lives under `Qonsole Data/Library`. A read-only installation uses the per-user Qonsole profile.
+
 ## Play the personal desktop build
 
 Open `dist/Qonsole-Personal/Qonsole.app` on an Apple silicon Mac, or extract `dist/Qonsole-Personal.zip` and run `Qonsole.exe` on Windows x64. Keep the extracted folder together. Both executables use the same adjacent `Games` directory. This personal build includes the converted US PlayStation Tekken 3 disc and all 341 checksum-verified files from the supplied Windows Road Rash disc.
@@ -37,9 +47,7 @@ In a separate test of the packaged apps, Linux hosted a room and Windows and mac
 
 ### Packages and original game files
 
-The smaller `dist/Qonsole-darwin-arm64.zip`, `dist/Qonsole-win32-x64.zip` and `dist/Qonsole-linux-x64.tar.gz` contain the launcher, networking helper and MIT-licensed OpenKumite engine. Other owners can select their converted Tekken assets in **Game files**, or use the native engine's disc importer on first launch. For Road Rash, supply an installation of the pinned native rework, select its executable and original game-data directory in **Game files**, and select a built `room-core.wasm` or compatible `rr-netd` to host. The personal folder resolves all these paths automatically.
-
-Keep the personal ZIP private. The smaller packages omit original game content and the Road Rash engine. The pinned Road Rash project documents that its owner has yet to select a project license. Both reworks are independent, in-development projects. [OpenKumite release](https://github.com/openkumite/openkumite/releases/tag/v0.5.1) · [Road Rash upstream build and licensing notes](https://github.com/arkits/road-rash/blob/0c1092a68d252ba2ae642f285ee68251eb708312/docs/plans/33b-windows.md)
+The portable launcher packages include the networking helper. The Store supplies OpenKumite v0.5.1 or the Road Rash native rework, the selected game's data, and the Road Rash room server when applicable. Local installations can also be connected through **Game files**. [OpenKumite upstream](https://github.com/openkumite/openkumite/releases/tag/v0.5.1) · [Road Rash upstream](https://github.com/arkits/road-rash/tree/0c1092a68d252ba2ae642f285ee68251eb708312)
 
 On Linux x64, extract the tarball and run `./Qonsole` from its folder. OpenKumite needs Vulkan or OpenGL and a working desktop display. For a minimal Ubuntu 24.04 test image, add `libx11-6`, `libx11-xcb1`, `libxcursor1`, `libxi6`, `libxkbcommon-x11-0`, `libasound2t64` and `mesa-vulkan-drivers`. A headless test can use `xvfb-run`.
 
@@ -53,6 +61,8 @@ python3 scripts/native-engines.py
 npm run desktop
 npm run build:desktop
 ```
+
+To assemble new Store assets, run `python3 scripts/store-builds.py --release TAG --linux-package /path/to/upstream-linux-artifact.zip` after preparing the native engines, converted game data and room core. The pinned Linux artifact is [linux-package-x86_64](https://github.com/arkits/road-rash/actions/runs/45077446666). Upload the generated archives and catalog from `.runtime/store-release` to that tag in the builds repository. Copy the generated `catalog.json` to `desktop/store-catalog.json` and rebuild the launcher to pin the release. Game archives are kept outside the source repository.
 
 To reproduce a personal package, use the browser setup below to prepare the pinned Road Rash source and Emscripten toolchain, then bind the Tekken disc. Build the standalone native Mac game and portable room core and select your extracted Windows disc directory.
 
